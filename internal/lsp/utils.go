@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"9fans.net/acme-lsp/internal/lsp/text"
@@ -73,7 +74,10 @@ Kinds:
 func LocationLink(l *protocol.Location, basedir string) string {
 	p := text.ToPath(l.URI)
 	rel, err := filepath.Rel(basedir, p)
-	if err == nil && len(rel) < len(p) {
+	// Only use relative path when it's a proper relative (./ or ../). When the
+	// daemon's cwd is "/", Rel("/", "/Users/daniel/...") yields "Users/daniel/..."
+	// which breaks acme right-click (expects absolute or window-relative paths).
+	if err == nil && len(rel) < len(p) && strings.HasPrefix(rel, ".") {
 		p = rel
 	}
 	return fmt.Sprintf("%s:%v.%v,%v.%v", p,
