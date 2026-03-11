@@ -78,10 +78,16 @@ func getLine(p string, l int) string {
 	return ""
 }
 
-func PrintLocations(w io.Writer, loc []protocol.Location) error {
-	wd, err := os.Getwd()
-	if err != nil {
-		wd = ""
+// PrintLocations writes location lines to w. basedir is the directory of the acme
+// window (e.g. filepath.Dir of the current file); paths are shown relative to it
+// when possible (e.g. ./main.go:1.1,2.2). If basedir is empty, os.Getwd() is used.
+func PrintLocations(w io.Writer, loc []protocol.Location, basedir string) error {
+	if basedir == "" {
+		wd, err := os.Getwd()
+		if err != nil {
+			wd = ""
+		}
+		basedir = wd
 	}
 	sort.Slice(loc, func(i, j int) bool {
 		a := loc[i]
@@ -97,7 +103,7 @@ func PrintLocations(w io.Writer, loc []protocol.Location) error {
 		return n < 0
 	})
 	for _, l := range loc {
-		fmt.Fprintf(w, "%v:%s\n", lsp.LocationLink(&l, wd), getLine(text.ToPath(l.URI), int(l.Range.Start.Line+1)))
+		fmt.Fprintf(w, "%v:%s\n", lsp.LocationLink(&l, basedir), getLine(text.ToPath(l.URI), int(l.Range.Start.Line+1)))
 	}
 	return nil
 }
