@@ -40,6 +40,7 @@ func TestToPath(t *testing.T) {
 		{"/home/gopher/hello.go", "file:///home/gopher/hello.go"},
 		{"/home/タロ/src/hello.go", "file:///home/%E3%82%BF%E3%83%AD/src/hello.go"},
 		{"/usr/include/c++/v1/deque", "file:///usr/include/c%2B%2B/v1/deque"},
+		{"/Users/daniel/src/foo.go", "file://Users/daniel/src/foo.go"}, // two slashes -> absolute path
 	} {
 		name := ToPath(tc.uri)
 		if name != tc.name {

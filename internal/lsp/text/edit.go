@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -139,12 +140,32 @@ func ToURI(filename string) protocol.DocumentURI {
 }
 
 // ToPath converts URI to filename.
+// Normalizes file URIs with two slashes (file://path) to three (file:///path)
+// so that paths like file://Users/daniel/foo parse as /Users/daniel/foo on Unix.
+// Ensures absolute paths on Unix (leading /) for acme right-click and LSP refs/def.
 func ToPath(uri protocol.DocumentURI) string {
-	u, err := url.Parse(string(uri))
+	s := string(uri)
+	if strings.HasPrefix(s, "file://") && !strings.HasPrefix(s, "file:///") {
+		// Two slashes: file://Users/daniel/foo -> file:///Users/daniel/foo (golang/go#39789)
+		s = "file:///" + s[len("file://"):]
+	}
+	u, err := url.Parse(s)
 	if err != nil {
 		return string(uri)
 	}
-	return u.Path
+	p := u.Path
+	if u.Scheme == "file" && u.Host != "" {
+		// Host was parsed (e.g. "Users"); reconstruct absolute path.
+		if len(p) > 0 && p[0] == '/' {
+			p = "/" + u.Host + p
+		} else {
+			p = "/" + u.Host + "/" + p
+		}
+	} else if runtime.GOOS != "windows" && len(p) > 0 && p[0] != '/' {
+		// Unix: ensure absolute path so acme right-click works (e.g. Users/daniel/foo -> /Users/daniel/foo).
+		p = "/" + p
+	}
+	return p
 }
 
 // CutPrefix returns s without the provided leading prefix string
