@@ -90,11 +90,15 @@ func ServerSupportsIncrementalSync(cap *protocol.ServerCapabilities) bool {
 func LocationLink(l *protocol.Location, basedir string) string {
 	p := text.ToPath(l.URI)
 	rel, err := filepath.Rel(basedir, p)
-	// Only use relative path when it's a proper relative (./ or ../). When the
-	// daemon's cwd is "/", Rel("/", "/Users/daniel/...") yields "Users/daniel/..."
-	// which breaks acme right-click (expects absolute or window-relative paths).
-	if err == nil && len(rel) < len(p) && strings.HasPrefix(rel, ".") {
-		p = rel
+	if err == nil && len(rel) < len(p) {
+		// Don't use root-relative paths (when basedir is "/", rel is "Users/daniel/...").
+		if basedir != "/" || strings.HasPrefix(rel, ".") {
+			// Normalize: same-dir files like "main.go" -> "./main.go" for acme right-click.
+			if rel != "." && rel != ".." && !strings.HasPrefix(rel, "./") && !strings.HasPrefix(rel, "../") {
+				rel = "./" + rel
+			}
+			p = rel
+		}
 	}
 	return fmt.Sprintf("%s:%v.%v,%v.%v", p,
 		l.Range.Start.Line+1, l.Range.Start.Character+1,

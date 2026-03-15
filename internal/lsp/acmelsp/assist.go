@@ -305,7 +305,7 @@ func Symbol(server proxy.Server, query string) error {
 	for _, symbol := range symbols {
 		locations = append(locations, symbol.Location)
 	}
-	return PrintLocations(os.Stdout, locations)
+	return PrintLocations(os.Stdout, locations, "")
 }
 
 func Execute(server proxy.Server, serverID string, command string, args []string) error {

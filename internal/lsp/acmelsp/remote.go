@@ -153,7 +153,7 @@ func (rc *RemoteCmd) showCompletion(body string, kind CompletionKind) error {
 }
 
 func (rc *RemoteCmd) Definition(ctx context.Context, print bool) error {
-	pos, _, err := text.Position(rc.win)
+	pos, filename, err := text.Position(rc.win)
 	if err != nil {
 		return fmt.Errorf("failed to get position: %v", err)
 	}
@@ -168,7 +168,7 @@ func (rc *RemoteCmd) Definition(ctx context.Context, print bool) error {
 		return fmt.Errorf("no definition found")
 	}
 	if print {
-		return PrintLocations(rc.Stdout, locations)
+		return PrintLocations(rc.Stdout, locations, filepath.Dir(filename))
 	}
 	return PlumbLocations(locations)
 }
@@ -210,7 +210,7 @@ func (rc *RemoteCmd) Hover(ctx context.Context) error {
 }
 
 func (rc *RemoteCmd) Implementation(ctx context.Context, print bool) error {
-	pos, _, err := text.Position(rc.win)
+	pos, filename, err := text.Position(rc.win)
 	if err != nil {
 		return err
 	}
@@ -223,11 +223,11 @@ func (rc *RemoteCmd) Implementation(ctx context.Context, print bool) error {
 	if len(loc) == 0 {
 		return fmt.Errorf("no implementations found")
 	}
-	return PrintLocations(rc.Stdout, loc)
+	return PrintLocations(rc.Stdout, loc, filepath.Dir(filename))
 }
 
 func (rc *RemoteCmd) References(ctx context.Context) error {
-	pos, _, err := text.Position(rc.win)
+	pos, filename, err := text.Position(rc.win)
 	if err != nil {
 		return err
 	}
@@ -243,7 +243,7 @@ func (rc *RemoteCmd) References(ctx context.Context) error {
 	if len(loc) == 0 {
 		return fmt.Errorf("no references found")
 	}
-	return PrintLocations(rc.Stdout, loc)
+	return PrintLocations(rc.Stdout, loc, filepath.Dir(filename))
 }
 
 // Rename renames the identifier at cursor position to newname.
@@ -325,7 +325,7 @@ func (rc *RemoteCmd) DocumentSymbol(ctx context.Context) error {
 }
 
 func (rc *RemoteCmd) TypeDefinition(ctx context.Context, print bool) error {
-	pos, _, err := text.Position(rc.win)
+	pos, filename, err := text.Position(rc.win)
 	if err != nil {
 		return err
 	}
@@ -340,7 +340,7 @@ func (rc *RemoteCmd) TypeDefinition(ctx context.Context, print bool) error {
 		return fmt.Errorf("no type definition found")
 	}
 	if print {
-		return PrintLocations(rc.Stdout, locations)
+		return PrintLocations(rc.Stdout, locations, filepath.Dir(filename))
 	}
 	return PlumbLocations(locations)
 }
